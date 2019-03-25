@@ -15,7 +15,7 @@ public class Pixy2USBOpenCVCalibrate {
         private Pixy2USBOpenCVCalibrate pixy2usbOpenCVCalibrate;
         private double m_expirationTime;
         private int m_notifier = NotifierJNI.initializeNotifier();
-        private final double m_period = 2.0;
+        private final double m_period = 1.0;
 
         public AcquireTask(Pixy2USBOpenCVCalibrate pixy2usbOpenCVCalibrate) {
             this.pixy2usbOpenCVCalibrate = pixy2usbOpenCVCalibrate;
@@ -28,7 +28,7 @@ public class Pixy2USBOpenCVCalibrate {
             int init_result = pixy2usbOpenCVCalibrate.pixy2USBInit();
             if (init_result == 0) {
                 pixy2usbOpenCVCalibrate.pixy2USBGetVersion();
-                pixy2usbOpenCVCalibrate.pixy2USBLampOff();
+                pixy2usbOpenCVCalibrate.pixy2USBLampOn();
 
                 m_expirationTime = RobotController.getFPGATime() * 1e-6 + m_period;
                 updateAlarm();
@@ -42,11 +42,16 @@ public class Pixy2USBOpenCVCalibrate {
                     m_expirationTime += m_period;
                     updateAlarm();
     
-                    System.out.println("TODO: Should take picture here");
-                    // pixy2usbOpenCVCalibrate.pixy2USBTakePicture();
+                    // System.out.println("TODO: Should take picture here");
+                    System.out.println(String.format("INFO: loop %d of %d", i, 100));
+                    pixy2usbOpenCVCalibrate.pixy2USBTakePicture();
                 }
 
-                pixy2usbOpenCVCalibrate.pixy2Calibrate();
+                // pixy2usbOpenCVCalibrate.pixy2Calibrate();
+
+                // pixy2usbOpenCVCalibrate.pixy2EstimateObjectPose();
+                
+                pixy2usbOpenCVCalibrate.pixy2USBLampOff();
 
             } else {
                 System.out.println("WARNING: Failed Pixy2 USB Init!!!");
@@ -77,4 +82,6 @@ public class Pixy2USBOpenCVCalibrate {
     private native void pixy2USBTakePicture();
 
     private native void pixy2Calibrate();
+
+    private native void pixy2EstimateObjectPose();
 }

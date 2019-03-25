@@ -36,7 +36,7 @@ std::vector<cv::Point3f> createChessboardObjectPoints()
 {
    std::vector<cv::Point3f> return_vec;
    for (int i=0; i<7; ++i) {
-      for (int j=0; j<6; ++j) {
+      for (int j=0; j<7; ++j) {
          return_vec.push_back(cv::Point3f(i, j, 0));
       }
    }
@@ -137,8 +137,8 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
    struct dirent *ent;
    
    std::vector<std::string> filenames;
-   // std::string prefix("checker_board");
-   std::string prefix("left");
+   std::string prefix("checker_board");
+   // std::string prefix("left");
    bool retval;
 
    std::vector<cv::Point3f> objBasePoints = createChessboardObjectPoints();
@@ -153,9 +153,9 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
 
 
    if ((dir = opendir("/home/lvuser/images")) != NULL) {
-      /* finds all the files and directories within directory */
+      /* Finds all the files and directories within directory */
       while ((ent = readdir(dir)) != NULL) {
-         /* only keep file names with given prefix */
+         /* Only keep file names with given prefix */
          std::string curfilename(ent->d_name);
          if (!curfilename.compare(0, prefix.size(), prefix)) {
             filenames.push_back(curfilename);
@@ -163,7 +163,7 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
       }
       closedir(dir);
    } else {
-      /* could not open directory */
+      /* Could not open directory */
       perror ("");
    }
 
@@ -179,9 +179,10 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
 
       if (imgShape != gray.size()) {
          imgShape = gray.size();
+         std::cout << "INFO: image shape: " << imgShape << std::endl;
       }
 
-      retval = cv::findChessboardCorners(img, cv::Size(7, 6), corners);
+      retval = cv::findChessboardCorners(img, cv::Size(7, 7), corners);
 
       if (retval) {
          std::cout << "INFO: Successfully found corners: "<< std::endl;
@@ -191,6 +192,8 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
          cv::cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1), criteria);
 
          imgPoints.push_back(corners);
+         // std::cout << "INFO: corners: " << std::endl;
+         // std::cout << corners << std::endl;
 
       } else {
          std::cout << "INFO: Could not find corners: "<< std::endl;
@@ -205,6 +208,10 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
    std::cout << "INFO: distCoeffs: " << distCoeffs << std::endl;
    std::cout << "INFO: rvec size: " << rvecs.size() << std::endl;
 
+   cv::FileStorage fs("/home/lvuser/images/out_camera_data.yml", cv::FileStorage::WRITE);
+   fs << "camera_matrix" << cameraMatrix;
+   fs << "distortion_coefficients" << distCoeffs;
+
    for (cv::Mat& rvec : rvecs) {
       std::cout << rvec << std::endl;
    }
@@ -212,4 +219,26 @@ JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2Calibr
    std::cout << "INFO: tvec size: " << tvecs.size() << std::endl;
 
    std::cout << "INFO: End Calibration" << std::endl;
+}
+
+JNIEXPORT void JNICALL Java_frc_robot_vision_Pixy2USBOpenCVCalibrate_pixy2EstimateObjectPose(JNIEnv *, jobject)
+{
+   std::cout << "INFO: Start Estimate Object Pose" << std::endl;
+
+   cv::FileStorage fs("/home/lvuser/images/out_camera1_data.yml", cv::FileStorage::READ);
+
+   cv::Mat camera_matrix, dist_coeffs;
+   fs["camera_matrix"] >> camera_matrix;
+   fs["distortion_coefficients"] >> dist_coeffs;
+
+   std::cout << "INFO: camera matrix: " << cameraMatrix << std::endl;
+   std::cout << "INFO: dist coeffs: " << distCoeffs << std::endl;
+
+   cv::Mat rotation_vector;
+   cv::Mat translation_vector;
+
+   // Solve for pose
+   // cv::solvePnP(model_points, image_points, camera_matrix, dist_coeffs, rotation_vector, translation_vector);
+
+   std::cout << "INFO: End Estimate Object Pose" << std::endl;
 }
